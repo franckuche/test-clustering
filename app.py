@@ -10,12 +10,16 @@ st.write("Cette application permet d'extraire les noms de domaine des deux premi
 
 def fetch_domains(keyword):
     url = f"https://api.spaceserp.com/google/search?apiKey=8e87e954-6b75-4888-bd6c-86868540beeb&q={keyword}&domain=google.fr&gl=cn&hl=nl&device=mobile"
+    
     response = requests.get(url)
     data = response.json()
     
-    urls = [entry['link'] for entry in data['organic_results']][:2]
-    domains = [urlparse(url).netloc for url in urls]
-    return ", ".join(domains)
+    if 'organic_results' in data:
+        urls = [entry.get('link', '') for entry in data['organic_results'] if 'link' in entry][:2]
+        domains = [urlparse(url).netloc for url in urls]
+        return ", ".join(domains)
+    else:
+        return "N/A"
 
 uploaded_file = st.file_uploader("📤 Choisissez un fichier CSV contenant vos mots-clés", type="csv")
 
