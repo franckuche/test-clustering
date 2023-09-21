@@ -73,7 +73,13 @@ if uploaded_file is not None:
         for cluster in clusters:
             # Trouver les mots-clés du cluster triés par volume
             keywords_cluster = df[df['keyword'].isin(cluster[:2])].sort_values(by="volume", ascending=False)
-            st.table(keywords_cluster[["keyword", "volume"]])
+            
+            # Afficher le mot-clé principal du cluster
+            st.markdown(f"### Mot-clé principal : {keywords_cluster.iloc[0]['keyword']} (Volume : {keywords_cluster.iloc[0]['volume']})")
+            
+            # Afficher un tableau pour les autres mots-clés du cluster
+            if len(keywords_cluster) > 1:
+                st.table(keywords_cluster[1:][["keyword", "volume"]])
 
         csv_download = df.to_csv(index=False).encode()
         st.download_button("Télécharger le CSV avec les liens", csv_download, "updated_keywords.csv")
