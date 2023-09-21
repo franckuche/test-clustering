@@ -9,11 +9,22 @@ st.set_page_config(page_title="Extracteur de Liens", layout="wide")
 st.title("Extracteur de liens à partir des résultats de recherche")
 st.write("Cette application permet d'extraire les liens des 20 premiers résultats de recherche de Google pour chaque mot-clé fourni.")
 
+API_KEYS = [
+    "8e87e954-6b75-4888-bd6c-86868540beeb",  # Votre première clé
+    "b0b85ece-cff0-4943-a341-ca654c6fa3ce"   # Votre deuxième clé (remplacez par la valeur réelle)
+]
+key_index = 0  # Utilisé pour suivre la clé actuellement utilisée
+
 def fetch_links(keyword):
-    url = f"https://api.spaceserp.com/google/search?apiKey=8e87e954-6b75-4888-bd6c-86868540beeb&q={keyword}&domain=google.fr&gl=cn&hl=nl&device=mobile"
-    
+    global key_index
     MAX_RETRIES = 3
+    
     for _ in range(MAX_RETRIES):
+        # Sélectionnez la clé API à utiliser
+        api_key = API_KEYS[key_index]
+        
+        url = f"https://api.spaceserp.com/google/search?apiKey={api_key}&q={keyword}&domain=google.fr&gl=cn&hl=nl&device=mobile"
+        
         try:
             response = requests.get(url)
             if response.status_code == 200:
@@ -25,11 +36,14 @@ def fetch_links(keyword):
                 else:
                     return "Pas de résultats"
             else:
-                time.sleep(2)  # Attendez avant de réessayer
+                # Si la clé API actuelle renvoie une erreur, passez à la clé suivante
+                key_index = (key_index + 1) % len(API_KEYS)
+                time.sleep(2)
                 continue
         except requests.RequestException:
-            time.sleep(2)  # Attendez avant de réessayer
+            time.sleep(2)
             continue
+            
     return "Pas de résultats"
 
 uploaded_file = st.file_uploader("📤 Choisissez un fichier CSV contenant vos mots-clés", type="csv")
