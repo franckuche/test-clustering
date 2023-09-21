@@ -12,21 +12,25 @@ st.write("Cette application permet d'extraire les liens des 20 premiers résulta
 def fetch_links(keyword):
     url = f"https://api.spaceserp.com/google/search?apiKey=8e87e954-6b75-4888-bd6c-86868540beeb&q={keyword}&domain=google.fr&gl=cn&hl=nl&device=mobile"
     
-    try:
-        response = requests.get(url)
-        if response.status_code == 200:
-            data = response.json()
-            if 'organic_results' in data:
-                urls = [entry.get('link', '') for entry in data['organic_results'] if 'link' in entry][:20]
-                return ", ".join(urls)
+    MAX_RETRIES = 3
+    for _ in range(MAX_RETRIES):
+        try:
+            response = requests.get(url)
+            if response.status_code == 200:
+                data = response.json()
+                if 'organic_results' in data:
+                    urls = [entry.get('link', '') for entry in data['organic_results'] if 'link' in entry][:20]
+                    if urls:
+                        return ", ".join(urls)
+                else:
+                    return "Pas de résultats"
             else:
-                return "Pas de résultats"
-        else:
-            return f"Erreur {response.status_code}"
-    except requests.RequestException as e:
-        return str(e)
-    finally:
-        time.sleep(2)
+                time.sleep(2)  # Attendez avant de réessayer
+                continue
+        except requests.RequestException:
+            time.sleep(2)  # Attendez avant de réessayer
+            continue
+    return "Pas de résultats"
 
 uploaded_file = st.file_uploader("📤 Choisissez un fichier CSV contenant vos mots-clés", type="csv")
 
