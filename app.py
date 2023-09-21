@@ -61,6 +61,7 @@ uploaded_file = st.file_uploader("📤 Choisissez un fichier CSV contenant vos m
 
 if uploaded_file is not None:
     df = pd.read_csv(uploaded_file)
+    df = df.sort_values(by="volume", ascending=False)  # Tri par volume
     if 'keyword' in df.columns:
         st.subheader("Récupération des URLs en cours...")
         df['urls'] = df['keyword'].apply(fetch_urls)
@@ -70,7 +71,9 @@ if uploaded_file is not None:
 
         st.subheader("Clusters trouvés :")
         for cluster in clusters:
-            st.write(f"Cluster : {cluster[0]} - {cluster[1]} avec une similarité de {cluster[2]*100:.2f}%")
+            # Trouver les mots-clés du cluster triés par volume
+            keywords_cluster = df[df['keyword'].isin(cluster[:2])].sort_values(by="volume", ascending=False)
+            st.table(keywords_cluster[["keyword", "volume"]])
 
         csv_download = df.to_csv(index=False).encode()
         st.download_button("Télécharger le CSV avec les liens", csv_download, "updated_keywords.csv")
