@@ -44,7 +44,7 @@ def fetch_urls(keyword):
 
 # Fonction pour comparer les URLs et créer des clusters
 def compare_keywords(df):
-    clusters = []
+    clusters = {}
     keywords = df['keyword'].tolist()
     
     for i in range(len(keywords)):
@@ -52,7 +52,10 @@ def compare_keywords(df):
             common_urls = df.loc[i, 'urls'].intersection(df.loc[j, 'urls'])
             similarity = len(common_urls) / 20.0
             if similarity >= 0.4:
-                clusters.append((keywords[i], keywords[j], similarity))
+                if keywords[i] not in clusters:
+                    clusters[keywords[i]] = [keywords[j]]
+                else:
+                    clusters[keywords[i]].append(keywords[j])
                 
     return clusters
 
@@ -61,7 +64,11 @@ uploaded_file = st.file_uploader("📤 Choisissez un fichier CSV contenant vos m
 
 if uploaded_file is not None:
     df = pd.read_csv(uploaded_file)
-    df = df.sort_values(by="volume", ascending=False)  # Tri par volume
+    
+    # Tri par volume seulement si la colonne "volume" existe
+    if 'volume' in df.columns:
+        df = df.sort_values(by="volume", ascending=False)
+    
     if 'keyword' in df.columns:
         st.subheader("Récupération des URLs en cours...")
         df['urls'] = df['keyword'].apply(fetch_urls)
@@ -70,16 +77,19 @@ if uploaded_file is not None:
         clusters = compare_keywords(df)
 
         st.subheader("Clusters trouvés :")
-        for cluster in clusters:
-            # Trouver les mots-clés du cluster triés par volume
-            keywords_cluster = df[df['keyword'].isin(cluster[:2])].sort_values(by="volume", ascending=False)
+        
+        for main_keyword, similar_keywords in clusters.items():
+            cluster_keywords = [main_keyword] + similar_keywords
+            keywords_cluster = df[df['keyword'].isin(cluster_keywords)].sort_values(by="volume", ascending=False).reset_index(drop=True)
             
-            # Afficher le mot-clé principal du cluster
-            st.markdown(f"### Mot-clé principal : {keywords_cluster.iloc[0]['keyword']} (Volume : {keywords_cluster.iloc[0]['volume']})")
+            data = {
+                "Type de mot-clé": ["Mot-clé principal"] + ["Mot-clé secondaire"] * (len(keywords_cluster) - 1),
+                "Mot-clé": keywords_cluster["keyword"].tolist(),
+                "Volume": keywords_cluster["volume"].tolist()
+            }
             
-            # Afficher un tableau pour les autres mots-clés du cluster
-            if len(keywords_cluster) > 1:
-                st.table(keywords_cluster[1:][["keyword", "volume"]])
+            cluster_df = pd.DataFrame(data)
+            st.table(cluster_df)
 
         csv_download = df.to_csv(index=False).encode()
         st.download_button("Télécharger le CSV avec les liens", csv_download, "updated_keywords.csv")
