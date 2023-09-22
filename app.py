@@ -21,9 +21,7 @@ def fetch_urls(keyword):
     MAX_RETRIES = 3
     
     for _ in range(MAX_RETRIES):
-        # Sélectionnez la clé API à utiliser
         api_key = API_KEYS[key_index]
-        
         url = f"https://api.spaceserp.com/google/search?apiKey={api_key}&q={keyword}&domain=google.fr&gl=cn&hl=nl&device=mobile"
         
         try:
@@ -34,7 +32,6 @@ def fetch_urls(keyword):
                     urls = [entry.get('link', '') for entry in data['organic_results'] if 'link' in entry][:20]
                     return set(urls)
             else:
-                # Si la clé API actuelle renvoie une erreur, passez à la clé suivante
                 key_index = (key_index + 1) % len(API_KEYS)
                 continue
         except requests.RequestException:
@@ -65,7 +62,6 @@ uploaded_file = st.file_uploader("📤 Choisissez un fichier CSV contenant vos m
 if uploaded_file is not None:
     df = pd.read_csv(uploaded_file)
     
-    # Tri par volume seulement si la colonne "volume" existe
     if 'volume' in df.columns:
         df = df.sort_values(by="volume", ascending=False)
     
@@ -78,6 +74,8 @@ if uploaded_file is not None:
 
         st.subheader("Clusters trouvés :")
         
+        keywords_in_clusters = set()
+
         for main_keyword, similar_keywords in clusters.items():
             cluster_keywords = [main_keyword] + similar_keywords
             keywords_cluster = df[df['keyword'].isin(cluster_keywords)].sort_values(by="volume", ascending=False).reset_index(drop=True)
@@ -90,6 +88,15 @@ if uploaded_file is not None:
             
             cluster_df = pd.DataFrame(data)
             st.table(cluster_df)
+
+            keywords_in_clusters.update(cluster_keywords)
+
+        # Afficher les mots-clés qui ne sont pas dans un cluster
+        remaining_keywords = set(df['keyword']) - keywords_in_clusters
+        if remaining_keywords:
+            st.subheader("Mots-clés sans cluster :")
+            remaining_df = df[df['keyword'].isin(remaining_keywords)].sort_values(by="volume", ascending=False).reset_index(drop=True)
+            st.table(remaining_df[["keyword", "volume"]])
 
         csv_download = df.to_csv(index=False).encode()
         st.download_button("Télécharger le CSV avec les liens", csv_download, "updated_keywords.csv")
