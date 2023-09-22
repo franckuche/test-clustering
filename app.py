@@ -91,14 +91,27 @@ if uploaded_file is not None:
 
             keywords_in_clusters.update(cluster_keywords)
 
-        # Afficher les mots-clés qui ne sont pas dans un cluster
-        remaining_keywords = set(df['keyword']) - keywords_in_clusters
-        if remaining_keywords:
-            st.subheader("Mots-clés sans cluster :")
-            remaining_df = df[df['keyword'].isin(remaining_keywords)].sort_values(by="volume", ascending=False).reset_index(drop=True)
-            st.table(remaining_df[["keyword", "volume"]])
+        # Preparing CSV structure
+        csv_data = {
+            "keyword": [],
+            "volume": [],
+            "cluster": []
+        }
+        
+        for main_keyword, similar_keywords in clusters.items():
+            for keyword in [main_keyword] + similar_keywords:
+                csv_data["keyword"].append(keyword)
+                csv_data["volume"].append(df[df["keyword"] == keyword]["volume"].values[0])
+                csv_data["cluster"].append(main_keyword)
 
-        csv_download = df.to_csv(index=False).encode()
-        st.download_button("Télécharger le CSV avec les liens", csv_download, "updated_keywords.csv")
+        # Adding keywords not in clusters
+        for keyword in set(df["keyword"]) - keywords_in_clusters:
+            csv_data["keyword"].append(keyword)
+            csv_data["volume"].append(df[df["keyword"] == keyword]["volume"].values[0])
+            csv_data["cluster"].append("keyword unique")
+
+        csv_df = pd.DataFrame(csv_data)
+        csv_download = csv_df.to_csv(index=False).encode()
+        st.download_button("Télécharger le CSV avec les clusters", csv_download, "updated_keywords.csv")
     else:
         st.error("❌ Le fichier CSV doit avoir une colonne 'keyword'")
