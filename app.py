@@ -16,6 +16,9 @@ API_KEYS = [
 key_index = 0  # Utilisé pour suivre la clé actuellement utilisée
 
 # Ajout des widgets pour le choix du domaine, du pays, de la langue, du dispositif et de l'appareil
+# ... [Début de votre code]
+
+# Ajout des widgets pour le choix du domaine, du pays, de la langue, du dispositif et de l'appareil
 domains = ["google.com", "google.de", "google.es", "google.fr", "google.it"]
 selected_domain = st.sidebar.selectbox("Domaine de Google", sorted(domains), index=3)
 
@@ -27,7 +30,7 @@ countries = {
     "France": "fr",
     "Italie": "it"
 }
-selected_country = st.sidebar.selectbox("Pays (gl)", sorted(countries.keys()), index=4)
+selected_country = st.sidebar.selectbox("Pays (gl)", sorted(countries.keys()), index=sorted(countries.keys()).index("France"))
 gl_value = countries[selected_country]
 
 languages = {
@@ -36,9 +39,8 @@ languages = {
     "Italien": "it",
     "Allemand": "de"
 }
-selected_language = st.sidebar.selectbox("Langue (hl)", sorted(languages.keys()), index=1)
+selected_language = st.sidebar.selectbox("Langue (hl)", sorted(languages.keys()), index=sorted(languages.keys()).index("Français"))
 hl_value = languages[selected_language]
-
 devices = ["mobile", "desktop", "tablet"]
 selected_device = st.sidebar.selectbox("Appareil", devices, index=0)
 
@@ -48,7 +50,7 @@ st.sidebar.text(f"Seuil de similarité choisi: {similarity_threshold*100}%")
 
 # Ajout d'un widget pour choisir le nombre de résultats
 num_results_options = [3, 5, 10, 15, 20]
-num_results = st.sidebar.selectbox("Nombre de résultats à considérer", num_results_options)
+num_results = st.sidebar.selectbox("Nombre de résultats à considérer", num_results_options, index=num_results_options.index(10))
 st.sidebar.text(f"Nombre de résultats choisis: {num_results}")
 
 # Fonction pour récupérer les URLs
