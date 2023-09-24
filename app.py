@@ -15,6 +15,15 @@ API_KEYS = [
 ]
 key_index = 0  # Utilisé pour suivre la clé actuellement utilisée
 
+# Ajout d'un widget pour choisir le pourcentage de similarité
+similarity_threshold = st.sidebar.slider("Pourcentage de similarité", min_value=0.0, max_value=1.0, value=0.4, step=0.05)
+st.sidebar.text(f"Seuil de similarité choisi: {similarity_threshold*100}%")
+
+# Ajout d'un widget pour choisir le nombre de résultats
+num_results_options = [3, 5, 10, 15, 20]
+num_results = st.sidebar.selectbox("Nombre de résultats à considérer", num_results_options)
+st.sidebar.text(f"Nombre de résultats choisis: {num_results}")
+
 # Fonction pour récupérer les URLs
 def fetch_urls(keyword):
     global key_index
@@ -29,7 +38,7 @@ def fetch_urls(keyword):
             if response.status_code == 200:
                 data = response.json()
                 if 'organic_results' in data:
-                    urls = [entry.get('link', '') for entry in data['organic_results'] if 'link' in entry][:20]
+                    urls = [entry.get('link', '') for entry in data['organic_results'] if 'link' in entry][:num_results]
                     return set(urls)
             else:
                 key_index = (key_index + 1) % len(API_KEYS)
@@ -47,8 +56,8 @@ def compare_keywords(df):
     for i in range(len(keywords)):
         for j in range(i+1, len(keywords)):
             common_urls = df.loc[i, 'urls'].intersection(df.loc[j, 'urls'])
-            similarity = len(common_urls) / 20.0
-            if similarity >= 0.4:
+            similarity = len(common_urls) / float(num_results)
+            if similarity >= similarity_threshold:
                 if keywords[i] not in clusters:
                     clusters[keywords[i]] = [keywords[j]]
                 else:
@@ -74,8 +83,6 @@ if uploaded_file is not None:
 
         st.subheader("Clusters trouvés :")
         
-        keywords_in_clusters = set()
-
         for main_keyword, similar_keywords in clusters.items():
             cluster_keywords = [main_keyword] + similar_keywords
             keywords_cluster = df[df['keyword'].isin(cluster_keywords)].sort_values(by="volume", ascending=False).reset_index(drop=True)
@@ -89,8 +96,6 @@ if uploaded_file is not None:
             cluster_df = pd.DataFrame(data)
             st.table(cluster_df)
 
-            keywords_in_clusters.update(cluster_keywords)
-
         # Preparing CSV structure
         csv_data = {
             "keyword": [],
@@ -98,8 +103,10 @@ if uploaded_file is not None:
             "cluster": []
         }
         
+        keywords_in_clusters = set()
         for main_keyword, similar_keywords in clusters.items():
             for keyword in [main_keyword] + similar_keywords:
+                keywords_in_clusters.add(keyword)
                 csv_data["keyword"].append(keyword)
                 csv_data["volume"].append(df[df["keyword"] == keyword]["volume"].values[0])
                 csv_data["cluster"].append(main_keyword)
@@ -112,6 +119,6 @@ if uploaded_file is not None:
 
         csv_df = pd.DataFrame(csv_data)
         csv_download = csv_df.to_csv(index=False).encode()
-        st.download_button("Télécharger le CSV avec les clusters", csv_download, "updated_keywords.csv")
+        st.download_button("Télécharger le CSV avec les clusters", csv_download, "clusters_keywords.csv")
     else:
         st.error("❌ Le fichier CSV doit avoir une colonne 'keyword'")
