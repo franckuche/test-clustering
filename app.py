@@ -21,7 +21,7 @@ st.sidebar.text(f"Seuil de similarité choisi: {similarity_threshold*100}%")
 
 # Ajout d'un widget pour choisir le nombre de résultats
 num_results_options = [3, 5, 10, 15, 20]
-num_results = st.sidebar.selectbox("Nombre de résultats à considérer", num_results_options)
+num_results = st.sidebar.selectbox("Nombre de résultats à prendre en compte", num_results_options)
 st.sidebar.text(f"Nombre de résultats choisis: {num_results}")
 
 # Fonction pour récupérer les URLs
