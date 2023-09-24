@@ -15,13 +15,40 @@ API_KEYS = [
 ]
 key_index = 0  # Utilisé pour suivre la clé actuellement utilisée
 
+# Ajout des widgets pour le choix du domaine, du pays, de la langue, du dispositif et de l'appareil
+domains = ["google.com", "google.de", "google.es", "google.fr", "google.it"]
+selected_domain = st.sidebar.selectbox("Domaine de Google", sorted(domains), index=3)
+
+countries = {
+    "USA": "us",
+    "Espagne": "es",
+    "Allemagne": "de",
+    "Angleterre": "uk",
+    "France": "fr",
+    "Italie": "it"
+}
+selected_country = st.sidebar.selectbox("Pays (gl)", sorted(countries.keys()), index=4)
+gl_value = countries[selected_country]
+
+languages = {
+    "Anglais": "en",
+    "Français": "fr",
+    "Italien": "it",
+    "Allemand": "de"
+}
+selected_language = st.sidebar.selectbox("Langue (hl)", sorted(languages.keys()), index=1)
+hl_value = languages[selected_language]
+
+devices = ["mobile", "desktop", "tablet"]
+selected_device = st.sidebar.selectbox("Appareil", devices, index=0)
+
 # Ajout d'un widget pour choisir le pourcentage de similarité
 similarity_threshold = st.sidebar.slider("Pourcentage de similarité", min_value=0.0, max_value=1.0, value=0.4, step=0.05)
 st.sidebar.text(f"Seuil de similarité choisi: {similarity_threshold*100}%")
 
 # Ajout d'un widget pour choisir le nombre de résultats
 num_results_options = [3, 5, 10, 15, 20]
-num_results = st.sidebar.selectbox("Nombre de résultats à prendre en compte", num_results_options)
+num_results = st.sidebar.selectbox("Nombre de résultats à considérer", num_results_options)
 st.sidebar.text(f"Nombre de résultats choisis: {num_results}")
 
 # Fonction pour récupérer les URLs
@@ -31,7 +58,7 @@ def fetch_urls(keyword):
     
     for _ in range(MAX_RETRIES):
         api_key = API_KEYS[key_index]
-        url = f"https://api.spaceserp.com/google/search?apiKey={api_key}&q={keyword}&domain=google.fr&gl=cn&hl=nl&device=mobile"
+        url = f"https://api.spaceserp.com/google/search?apiKey={api_key}&q={keyword}&domain={selected_domain}&gl={gl_value}&hl={hl_value}&device={selected_device}"
         
         try:
             response = requests.get(url)
